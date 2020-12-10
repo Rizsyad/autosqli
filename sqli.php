@@ -5,7 +5,6 @@ require "AutoSqli.php";
 $autosqli = new AutoSqli();
 
 $autosqli->setUrl("http://www.easygosg.com/attraction-product.php?id=14");
-// // $autosqli->setUrl("http://coda.cc/product/product.php?id=4");
 
 echo "[!] Target Url : " . $autosqli->getUrl() . "\n";
 
