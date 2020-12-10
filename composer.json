@@ -1,0 +1,5 @@
+{
+    "require": {
+        "jmathai/php-multi-curl": "dev-master"
+    }
+}
