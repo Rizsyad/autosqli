@@ -1,10 +1,10 @@
 <?php
 
-require "AutoSqli.php";
+require "lib/AutoSqli.php";
 
 $autosqli = new AutoSqli();
 
-$autosqli->setUrl("http://www.easygosg.com/attraction-product.php?id=14");
+$autosqli->setUrl("http://www.easygosg.com/attraction-product.php?id=");
 
 echo "[!] Target Url : " . $autosqli->getUrl() . "\n";
 

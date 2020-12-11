@@ -56,7 +56,7 @@ class AutoSqli
 
     public function getUrl()
     {
-        return $this->url;
+        return $this->url . rand(10, 100);
     }
 
     public function strhex($string)
@@ -69,8 +69,8 @@ class AutoSqli
     {
         $mc = JMathai\PhpMultiCurl\MultiCurl::getInstance();
         $tampung_semua = array();
-        $pisah = explode("=", $this->url);
-        $this->url_injection = "{$pisah[0]}=-{$pisah[1]}";
+        // $pisah = explode("=", $this->url);
+        $this->url_injection = "{$this->url}-" . rand(10, 100);
 
         $tampung_angka = "";
 

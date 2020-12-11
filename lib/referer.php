@@ -9,7 +9,10 @@ class Referer
         'https://www.ecosia.org/search?q=',
         'https://play.google.com/store/search?q=',
         'https://duckduckgo.com/?q=',
-        'https://xnxx.com/search/'
+        'https://xnxx.com/search/',
+        'https://www.youtube.com/results?search_query=',
+        'https://pornhub.com/search/',
+        'https://github.com/search?q='
     );
 
     public static function random()
