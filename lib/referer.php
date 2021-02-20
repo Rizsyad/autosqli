@@ -18,6 +18,6 @@ class Referer
 
     public static function random()
     {
-        return self::$referer[array_rand(self::$referer)] . rand(5, 12);
+        return self::$referer[array_rand(self::$referer)] . rand();
     }
 }

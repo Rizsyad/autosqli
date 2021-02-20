@@ -1,5 +1,6 @@
 {
     "require": {
-        "jmathai/php-multi-curl": "dev-master"
+        "jmathai/php-multi-curl": "dev-master",
+        "spatie/regex": "^1.4"
     }
 }
